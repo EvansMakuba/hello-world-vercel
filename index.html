@@ -42,54 +42,61 @@
     </div>
 
     <script>
-        // Fetches the next item from our backend when the page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            fetchNextItem();
-        });
+    // Define the full address of your local backend
+    const API_BASE_URL = 'http://localhost:5000';
 
-        function fetchNextItem() {
-            fetch('/get-next-item')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('submissionUrl').value = data.submission_url;
-                    document.getElementById('commentText').value = data.comment_to_place;
-                })
-                .catch(error => console.error('Error fetching item:', error));
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchNextItem();
+    });
+
+    function fetchNextItem() {
+        // Use the full URL
+        fetch(`${API_BASE_URL}/get-next-item`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('submissionUrl').value = data.submission_url;
+                document.getElementById('commentText').value = data.comment_to_place;
+            })
+            .catch(error => {
+                console.error('Error fetching item:', error);
+                alert('Could not connect to the local backend. Is the Python server running?');
+            });
+    }
+
+    function submitAndGetNext() {
+        const publishedLinkInput = document.getElementById('publishedLink');
+        if (publishedLinkInput.value.trim() === '') {
+            alert('Please paste the published comment link before submitting.');
+            return;
         }
 
-        function submitAndGetNext() {
-            const publishedLinkInput = document.getElementById('publishedLink');
-            if (publishedLinkInput.value.trim() === '') {
-                alert('Please paste the published comment link before submitting.');
-                return;
-            }
+        // Use the full URL for the POST request as well
+        fetch(`${API_BASE_URL}/item-published`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    publishedLinkInput.value = '';
+                    fetchNextItem();
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting:', error);
+                alert('Could not connect to the local backend.');
+            });
+    }
 
-            // Tell the backend we are done with this item
-            fetch('/item-published', { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        // Clear the input and fetch the next item
-                        publishedLinkInput.value = '';
-                        fetchNextItem();
-                    }
-                })
-                .catch(error => console.error('Error submitting:', error));
-        }
-
-        function copyToClipboard(elementId, feedbackId) {
-            const textArea = document.getElementById(elementId);
-            textArea.select();
-            document.execCommand('copy');
-
-            // Show feedback message
-            const feedback = document.getElementById(feedbackId);
-            feedback.style.display = 'inline';
-            setTimeout(() => {
-                feedback.style.display = 'none';
-            }, 2000); // Hide after 2 seconds
-        }
-    </script>
+    function copyToClipboard(elementId, feedbackId) {
+        // ... (this function does not need changes)
+        const textArea = document.getElementById(elementId);
+        textArea.select();
+        document.execCommand('copy');
+        const feedback = document.getElementById(feedbackId);
+        feedback.style.display = 'inline';
+        setTimeout(() => {
+            feedback.style.display = 'none';
+        }, 2000);
+    }
+</script>
 
 </body>
 </html>
